@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Location Notifier</string>
+    <string name="title_activity_maps">Location Notifier</string>
+    <string name="bay_farm">Bay Farm, San Fransisco, California</string>
+    <string name="enter_lat_long">Enter Lat, Long</string>
+    <string name="enter_radius">Enter radius (in metres)</string>
+    <string name="submit">Submit</string>
+</resources>

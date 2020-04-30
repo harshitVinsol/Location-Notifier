@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:context=".MapsActivity">
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        map:layout_constraintBottom_toBottomOf="parent"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toTopOf="parent"
+        >
+
+    </fragment>
+
+    <TextView
+        android:id="@+id/text_address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/white_background"
+        android:padding="8dp"
+        android:text="@string/bay_farm"
+        android:fontFamily="@font/muli_regular"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        map:layout_constraintBottom_toTopOf="@+id/map"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edit_lat_long"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/white_background"
+        android:fontFamily="@font/muli_regular"
+        android:hint="@string/enter_lat_long"
+        android:inputType="phone"
+        android:padding="8dp"
+        android:textSize="18sp"
+        map:layout_constraintBottom_toTopOf="@+id/edit_radius"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintHorizontal_bias="0.0"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toBottomOf="@+id/text_address"
+        map:layout_constraintVertical_bias="0.978" />
+
+    <EditText
+        android:id="@+id/edit_radius"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/white_background"
+        android:fontFamily="@font/muli_regular"
+        android:hint="@string/enter_radius"
+        android:padding="8dp"
+        android:textSize="18sp"
+        android:inputType="number"
+        map:layout_constraintBottom_toTopOf="@+id/but_submit"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintHorizontal_bias="0.0"
+        map:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/but_submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/black_background"
+        android:fontFamily="@font/muli_regular"
+        android:paddingLeft="19dp"
+        android:paddingTop="6dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="6dp"
+        android:text="@string/submit"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        map:layout_constraintBottom_toBottomOf="parent"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
