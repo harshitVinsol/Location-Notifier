@@ -1,15 +1,24 @@
 package com.example.locationnotifier
 
+import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -23,7 +32,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var marker: Marker
     private var circle: Circle? = null
+    private var REQUEST_PERMISSION_LOCATION = 1
+    private var REQUIRED_PERMISSIONS = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
 
+    lateinit var geofencingClient: GeofencingClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -41,6 +53,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .title("San Fransisco, California")
             .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_image)))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(bayFarm))
+        enableMyLocation()
 
         but_submit.setOnClickListener {
             if(validate()){
@@ -60,6 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 val address: String = getAddress(location)
                 text_address.text = address
+                showNotification()
 
                 but_submit.isEnabled = true
             }
@@ -132,14 +146,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     Function to draw a circle on the location specified of the radius mentioned
      */
     private fun drawCircle(location : LatLng, radius : Double){
+        val stroke = 6f
+        val zoom = 14.0f
         val circleOptions = CircleOptions()
             .center(location)
             .radius(radius) // In meters
-            .strokeWidth(6f)
+            .strokeWidth(stroke)
             .strokeColor(Color.YELLOW)
             .fillColor(Color.argb(128, 255, 0, 0))
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 14.0f))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoom))
 
         circle= mMap.addCircle(circleOptions)
         circle?.isVisible = true
@@ -169,5 +185,70 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             address = "Can't get this Address"
         }
         return address
+    }
+
+    private fun showNotification(){
+        val builder = NotificationCompat.Builder(this, "personal_notification")
+        builder.setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Demo Notification")
+            .setContentText("You've entered in the location specified")
+            .priority = NotificationCompat.PRIORITY_DEFAULT
+
+        val notificationManagerCompat = NotificationManagerCompat.from(this)
+        notificationManagerCompat.notify(1, builder.build())
+
+    }
+
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(
+            baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun enableMyLocation(){
+        if(allPermissionsGranted()){
+            mMap.isMyLocationEnabled = true
+        }
+        else{
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_PERMISSION_LOCATION)
+        }
+    }
+
+    private fun getGeofencingRequest(): GeofencingRequest {
+        return GeofencingRequest.Builder().apply {
+            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            addGeofences(geofenceList)
+        }.build()
+    }
+
+    private fun checkDeviceLocationSettingsAndStartGeofence(resolve:Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(this)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve){
+                try {
+                    exception.startResolutionForResult(this,
+                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    binding.activityMapsMain,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettingsAndStartGeofence()
+                }.show()
+            }
+        }
+        locationSettingsResponseTask.addOnCompleteListener {
+            if ( it.isSuccessful ) {
+                addGeofenceForClue()
+            }
+        }
     }
 }
