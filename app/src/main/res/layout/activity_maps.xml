@@ -81,9 +81,9 @@
         android:layout_marginBottom="10dp"
         android:background="@drawable/black_background"
         android:fontFamily="@font/muli_regular"
-        android:paddingLeft="19dp"
+        android:paddingStart="19dp"
         android:paddingTop="6dp"
-        android:paddingRight="16dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="6dp"
         android:text="@string/submit"
         android:textAllCaps="false"
@@ -92,5 +92,4 @@
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

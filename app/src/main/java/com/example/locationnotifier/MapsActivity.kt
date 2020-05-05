@@ -1,23 +1,19 @@
 package com.example.locationnotifier
 
-import android.content.IntentSender
+import android.Manifest
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isInvisible
-import androidx.core.view.isVisible
-import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -26,22 +22,41 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.util.*
-
+/*
+MapsActivity to initialize a Google map and enable Goeofencing
+ */
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
-
     private lateinit var mMap: GoogleMap
     private lateinit var marker: Marker
     private var circle: Circle? = null
-    private var REQUEST_PERMISSION_LOCATION = 1
-    private var REQUIRED_PERMISSIONS = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
+    private val REQUEST_PERMISSION_LOCATION = 1
+    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+    private lateinit var geofencingClient: GeofencingClient
 
-    lateinit var geofencingClient: GeofencingClient
+    private val geofencePendingIntent: PendingIntent by lazy {
+        val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
+        intent.action = ACTION_GEOFENCE_EVENT
+        PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
+    companion object{
+        const val ACTION_GEOFENCE_EVENT = "Geofence_Event"
+        lateinit var notificationManager: NotificationManager
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        geofencingClient = LocationServices.getGeofencingClient(this)
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        removeGeofences()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -58,11 +73,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         but_submit.setOnClickListener {
             if(validate()){
                 but_submit.isEnabled = false
-
                 if(circle != null){
                     circle?.isVisible = false
                 }
-
                 val latLong = edit_lat_long.text.toString().split(",")
                 val lat= latLong[0].toDouble()
                 val long = latLong[1].toDouble()
@@ -73,9 +86,59 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 val address: String = getAddress(location)
                 text_address.text = address
-                showNotification()
-
                 but_submit.isEnabled = true
+
+                addGeofences(location, edit_radius.text.toString().toFloat())
+            }
+        }
+    }
+    /*
+    Function to add geofences in the map to a location of LatLang
+     */
+    private fun addGeofences(location: LatLng, radius: Float) {
+        val geofenceingRequest = getGeofencingRequest(location, radius)
+        geofencingClient.addGeofences(geofenceingRequest , geofencePendingIntent)?.run {
+            addOnSuccessListener {
+                Toast.makeText(this@MapsActivity, "The Geofence has been successfully added!", Toast.LENGTH_SHORT).show()
+            }
+            addOnFailureListener {
+                Toast.makeText(this@MapsActivity, "The Geofence failed to be added!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    /*
+    A function that returns a GeoFencingRequest after building it
+     */
+    private fun getGeofencingRequest(latlang : LatLng, radius: Float): GeofencingRequest {
+        return GeofencingRequest.Builder().apply {
+            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            addGeofences(listOf(buildGeofence(latlang,radius)))
+        }.build()
+    }
+    /*
+    A function that returns a Geofence
+     */
+    private fun buildGeofence(latlang : LatLng, radius: Float) : Geofence{
+        return Geofence.Builder()
+            .setRequestId("location")
+            .setCircularRegion(latlang.latitude,
+            latlang.longitude,
+            radius)
+            .setExpirationDuration(1000 * 60)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+            .build()
+
+    }
+    /*
+    A function to remove the Geofences
+     */
+    private fun removeGeofences() {
+        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+            addOnSuccessListener {
+                Toast.makeText(this@MapsActivity, "The Geofence has been successfully removed!", Toast.LENGTH_SHORT).show()
+            }
+            addOnFailureListener {
+                Toast.makeText(this@MapsActivity, "The Geofence removal failed!", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -186,69 +249,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         return address
     }
-
-    private fun showNotification(){
-        val builder = NotificationCompat.Builder(this, "personal_notification")
-        builder.setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Demo Notification")
-            .setContentText("You've entered in the location specified")
-            .priority = NotificationCompat.PRIORITY_DEFAULT
-
-        val notificationManagerCompat = NotificationManagerCompat.from(this)
-        notificationManagerCompat.notify(1, builder.build())
-
-    }
-
+    /*
+    A boolean function to check if all the permissions required are granted
+     */
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
-
+    /*
+    A function to enable the Location of the device
+     */
     private fun enableMyLocation(){
         if(allPermissionsGranted()){
             mMap.isMyLocationEnabled = true
         }
         else{
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_PERMISSION_LOCATION)
-        }
-    }
-
-    private fun getGeofencingRequest(): GeofencingRequest {
-        return GeofencingRequest.Builder().apply {
-            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-            addGeofences(geofenceList)
-        }.build()
-    }
-
-    private fun checkDeviceLocationSettingsAndStartGeofence(resolve:Boolean = true) {
-        val locationRequest = LocationRequest.create().apply {
-            priority = LocationRequest.PRIORITY_LOW_POWER
-        }
-        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-        val settingsClient = LocationServices.getSettingsClient(this)
-        val locationSettingsResponseTask =
-            settingsClient.checkLocationSettings(builder.build())
-        locationSettingsResponseTask.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException && resolve){
-                try {
-                    exception.startResolutionForResult(this,
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
-                } catch (sendEx: IntentSender.SendIntentException) {
-                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
-                }
-            } else {
-                Snackbar.make(
-                    binding.activityMapsMain,
-                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
-                ).setAction(android.R.string.ok) {
-                    checkDeviceLocationSettingsAndStartGeofence()
-                }.show()
-            }
-        }
-        locationSettingsResponseTask.addOnCompleteListener {
-            if ( it.isSuccessful ) {
-                addGeofenceForClue()
-            }
         }
     }
 }
