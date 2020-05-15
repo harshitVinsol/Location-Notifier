@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:map="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
     android:layout_width="match_parent"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
     tools:context=".MapsActivity">
+
+    <include
+        android:id="@+id/circular_progress"
+        layout="@layout/view_progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
 
     <fragment
         android:id="@+id/map"
@@ -14,8 +21,7 @@
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
-        map:layout_constraintTop_toTopOf="parent"
-        >
+        map:layout_constraintTop_toTopOf="parent">
 
     </fragment>
 
@@ -27,11 +33,11 @@
         android:layout_marginTop="64dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/white_background"
+        android:fontFamily="@font/muli_regular"
         android:padding="8dp"
         android:text="@string/bay_farm"
-        android:fontFamily="@font/muli_regular"
-        android:textSize="18sp"
         android:textColor="@color/black"
+        android:textSize="18sp"
         map:layout_constraintBottom_toTopOf="@+id/map"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
@@ -66,9 +72,9 @@
         android:background="@drawable/white_background"
         android:fontFamily="@font/muli_regular"
         android:hint="@string/enter_radius"
+        android:inputType="number"
         android:padding="8dp"
         android:textSize="18sp"
-        android:inputType="number"
         map:layout_constraintBottom_toTopOf="@+id/but_submit"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintHorizontal_bias="0.0"

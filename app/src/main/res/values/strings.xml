@@ -5,4 +5,5 @@
     <string name="enter_lat_long">Enter Lat, Long</string>
     <string name="enter_radius">Enter radius (in metres)</string>
     <string name="submit">Submit</string>
+    <string name="location_permission_not_granted">This app will not work without Location Permissions</string>
 </resources>
