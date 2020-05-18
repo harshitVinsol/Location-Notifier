@@ -18,10 +18,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.common.api.PendingResult
+import com.google.android.gms.common.api.ResultCallback
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -36,7 +36,7 @@ MapsActivity to initialize a Google map and enable Goeofencing
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var marker: Marker
-    private lateinit var locationSharedPref : SharedPreferences
+    private lateinit var locationSharedPref: SharedPreferences
     private var circle: Circle? = null
     private val REQUEST_PERMISSION_LOCATION = 1
     private val REQUIRED_PERMISSIONS = arrayOf(
@@ -44,7 +44,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
     private lateinit var geofencingClient: GeofencingClient
-
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
         intent.action = ACTION_GEOFENCE_EVENT
@@ -65,8 +64,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
+        showProgressBar()
         mMap = googleMap
-        //The marker is set to Bay Farm, San Fransisco, California
+        //The marker is set to Bay Farm, San Fransisco, California as per the figma designs
         val bayFarm = LatLng(37.7749, -122.4194)
         marker = mMap.addMarker(
             MarkerOptions()
@@ -76,8 +76,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         mMap.moveCamera(CameraUpdateFactory.newLatLng(bayFarm))
         enableMyLocation()
+        hideProgressBar()
 
-        if(locationSharedPref.getBoolean(LOCATION_AVAILABLE, false)){
+        if (locationSharedPref.getBoolean(LOCATION_AVAILABLE, false)) {
+            showProgressBar()
             val lat = locationSharedPref.getFloat(LATITUDE, 37.7749f).toDouble()
             val long = locationSharedPref.getFloat(LONGITUDE, -122.4194f).toDouble()
             val radius = locationSharedPref.getFloat(RADIUS_OF_GEOFENCE, 500f).toDouble()
@@ -87,9 +89,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             drawCircle(location, radius)
             val address: String = getAddress(location)
             text_address.text = address
-            addGeofences(location, radius.toFloat())
             edit_lat_long.setText("$lat,$long")
             edit_radius.setText("$radius")
+            hideProgressBar()
         }
 
         but_submit.setOnClickListener {
@@ -172,28 +174,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     /*
-    A function to remove the Geofences
-     */
-    private fun removeGeofences() {
-        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
-            addOnSuccessListener {
-                Toast.makeText(
-                    this@MapsActivity,
-                    "The Geofence has been successfully removed!",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            addOnFailureListener {
-                Toast.makeText(
-                    this@MapsActivity,
-                    "The Geofence removal failed!",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
-
-    /*
     A Boolean function to check the validation of both the Latitude, Longitude and Radius
      */
     private fun validate() = (validateLatLong() && validateRadius())
@@ -227,12 +207,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     A Boolean function to check if the radius is empty or not
      */
     private fun validateRadius(): Boolean {
-        if (edit_radius.text.toString().isBlank()) {
+        return if (edit_radius.text.toString().isBlank()) {
             edit_radius.error = "Enter a proper radius"
             edit_radius.requestFocus()
-            return false
+            false
         } else {
-            return true
+            true
         }
     }
 
@@ -286,15 +266,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         try {
             val addressList: List<Address>? =
                 geocoder.getFromLocation(location.latitude, location.longitude, 1)
-            if (addressList != null) {
+            address = if (addressList != null) {
                 val returnedAddress: Address = addressList[0]
                 val city: String = returnedAddress.locality
                 val state: String = returnedAddress.adminArea
                 val knownName: String = returnedAddress.featureName
 
-                address = "$knownName, $city, $state "
+                "$knownName, $city, $state "
             } else {
-                address = "No Address!"
+                "No Address!"
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -334,7 +314,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         when (requestCode) {
             REQUEST_PERMISSION_LOCATION -> {
                 if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    Toast.makeText(this, R.string.location_permission_not_granted, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        R.string.location_permission_not_granted,
+                        Toast.LENGTH_SHORT
+                    ).show()
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     val uri: Uri = Uri.fromParts("package", packageName, null)
                     intent.data = uri
@@ -364,5 +348,4 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val RADIUS_OF_GEOFENCE = "radius_of_geofence"
         private const val LOCATION_AVAILABLE = "is_location_available"
     }
-
 }
