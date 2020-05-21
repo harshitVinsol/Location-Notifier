@@ -71,7 +71,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         marker = mMap.addMarker(
             MarkerOptions()
                 .position(bayFarm)
-                .title("San Fransisco, California")
+                .title(resources.getString(R.string.san_fransisco))
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_image))
         )
         mMap.moveCamera(CameraUpdateFactory.newLatLng(bayFarm))
@@ -132,14 +132,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             addOnSuccessListener {
                 Toast.makeText(
                     this@MapsActivity,
-                    "The Geofence has been successfully added!",
+                    R.string.geofence_added,
                     Toast.LENGTH_SHORT
                 ).show()
             }
             addOnFailureListener {
                 Toast.makeText(
                     this@MapsActivity,
-                    "The Geofence failed to be added!",
+                    R.string.geofence_failed,
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -161,7 +161,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     private fun buildGeofence(latlang: LatLng, radius: Float): Geofence {
         return Geofence.Builder()
-            .setRequestId("location")
+            .setRequestId(REQUEST_ID)
             .setCircularRegion(
                 latlang.latitude,
                 latlang.longitude,
@@ -189,14 +189,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val lat = latitude.toDouble()
             val long = longitude.toDouble()
             if (!validateRangeLatLong(lat, long)) {
-                edit_lat_long.error = "Enter a proper Latitude(-90,90) and Longitude(-180,180)"
+                edit_lat_long.error = resources.getString(R.string.lat_lang_out_of_bound)
                 edit_lat_long.requestFocus()
                 return false
             } else {
                 return true
             }
         } else {
-            edit_lat_long.error = "Enter a proper Latitude and Longitude ex: 37.77, -122.41 "
+            edit_lat_long.error = resources.getString(R.string.proper_lat_lang)
             edit_lat_long.requestFocus()
             return false
         }
@@ -207,7 +207,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     private fun validateRadius(): Boolean {
         return if (edit_radius.text.toString().isBlank()) {
-            edit_radius.error = "Enter a proper radius"
+            edit_radius.error = resources.getString(R.string.radius_error)
             edit_radius.requestFocus()
             false
         } else {
@@ -346,5 +346,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val LONGITUDE = "longitude"
         private const val RADIUS_OF_GEOFENCE = "radius_of_geofence"
         private const val LOCATION_AVAILABLE = "is_location_available"
+        private const val REQUEST_ID = "location"
     }
 }

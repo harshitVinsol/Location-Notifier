@@ -6,4 +6,10 @@
     <string name="enter_radius">Enter radius (in metres)</string>
     <string name="submit">Submit</string>
     <string name="location_permission_not_granted">This app will not work without Location Permissions</string>
+    <string name="san_fransisco">San Fransisco, California</string>
+    <string name="geofence_added">The Geofence has been successfully added!</string>
+    <string name="geofence_failed">The Geofence failed to be added!</string>
+    <string name="lat_lang_out_of_bound">Enter a proper Latitude(-90,90) and Longitude(-180,180)</string>
+    <string name="proper_lat_lang">Enter a proper Latitude and Longitude ex: 37.77, -122.41 </string>
+    <string name="radius_error">Enter a proper radius</string>
 </resources>
