@@ -42,8 +42,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                     showNotification(context, title, message)
                 }
                 Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                    val title= "DWELLING"
-                    val message = "You're dwelling in the vicinity of the location."
+                    val title= "EXITED"
+                    val message = "You've exited from the vicinity of the location."
                     showNotification(context, title, message)
                 }
             }

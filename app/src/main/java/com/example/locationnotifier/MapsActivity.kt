@@ -167,10 +167,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 latlang.longitude,
                 radius
             )
-            .setExpirationDuration(1000 * 60)
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
             .build()
-
     }
 
     /*
